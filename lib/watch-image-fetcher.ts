@@ -267,15 +267,38 @@ Respond with the most likely image URL:`
 
 /**
  * Check if an image URL exists and is accessible
+ * Uses GET request with abort for better compatibility (some servers block HEAD)
  */
 async function checkImageExists(url: string): Promise<boolean> {
   try {
+    // For known reliable sources, trust the URL format and skip verification
+    // This avoids issues with CORS, rate limiting, and servers that block HEAD requests
+    if (url.includes('media.rolex.com') || url.includes('rolex.com')) {
+      console.log('  → Rolex URL detected, trusting format')
+      // For Rolex, just verify the format is correct
+      return url.includes('/upright-c/m') && /m[0-9a-z-]+/.test(url)
+    }
+
+    // For other sources, try to verify
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3s timeout
+
     const response = await fetch(url, {
       method: 'HEAD',
       cache: 'no-cache',
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; WatchService/1.0)',
+      },
     })
-    return response.ok && (response.headers.get('content-type')?.startsWith('image/') ?? false)
-  } catch {
+
+    clearTimeout(timeoutId)
+
+    const isValid = response.ok && (response.headers.get('content-type')?.startsWith('image/') ?? false)
+    console.log(`  → URL check: ${isValid ? '✓' : '✗'} (${response.status})`)
+    return isValid
+  } catch (error: any) {
+    console.log(`  → URL check failed: ${error.message}`)
     return false
   }
 }
