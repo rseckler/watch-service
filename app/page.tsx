@@ -1,14 +1,13 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { db } from '@/lib/supabase'
+import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Database as DatabaseIcon, Search, List, CheckCircle, Clock, TrendingUp, AlertCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { Database } from '@/lib/types'
 
-type Listing = Database['public']['Tables']['watch_listings']['Row']
-type SyncHistory = Database['public']['Tables']['watch_sync_history']['Row']
+type Listing = any
+type SyncHistory = any
 
 interface Stats {
   totalSources: number

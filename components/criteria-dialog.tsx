@@ -1,16 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { db } from '@/lib/supabase'
+import { useMutation, useQueryClient } from '@tantml:parameter>@tanstack/react-query'
+import { db } from '@/lib/db'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { X } from 'lucide-react'
-import { Database } from '@/lib/types'
 
-type Criteria = Database['public']['Tables']['watch_search_criteria']['Row']
+type Criteria = any
 
 interface CriteriaDialogProps {
   open: boolean

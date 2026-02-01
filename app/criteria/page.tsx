@@ -2,15 +2,14 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { db } from '@/lib/supabase'
+import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
 import { CriteriaDialog } from '@/components/criteria-dialog'
-import { Database } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
-type Criteria = Database['public']['Tables']['watch_search_criteria']['Row']
+type Criteria = any
 
 export default function CriteriaPage() {
   const [dialogOpen, setDialogOpen] = useState(false)

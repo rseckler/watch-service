@@ -2,16 +2,15 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { db } from '@/lib/supabase'
+import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ExternalLink, Filter, X } from 'lucide-react'
 import { formatDate, formatPrice } from '@/lib/utils'
-import { Database } from '@/lib/types'
 
-type Listing = Database['public']['Tables']['watch_listings']['Row']
-type Source = Database['public']['Tables']['watch_sources']['Row']
+type Listing = any
+type Source = any
 
 export default function ListingsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('')

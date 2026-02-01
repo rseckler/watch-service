@@ -2,14 +2,13 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { db } from '@/lib/supabase'
+import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ToggleLeft, ToggleRight, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { Database } from '@/lib/types'
 
-type Source = Database['public']['Tables']['watch_sources']['Row']
+type Source = any
 
 export default function SourcesPage() {
   const queryClient = useQueryClient()
