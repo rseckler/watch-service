@@ -15,9 +15,11 @@ export function formatPrice(price: number | null, currency: string = 'EUR'): str
 }
 
 export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('de-DE', {
+  return new Date(date).toLocaleString('de-DE', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
