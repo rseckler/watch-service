@@ -34,7 +34,7 @@ export async function POST() {
         source_type: 'Dealer',
         availability: 'Available',
         url_hash: 'test_hash_001_' + Date.now(),
-        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
+        image_url: searchCriteria.image_url || 'https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/2025/upright-c/m126710blro-0001',
       },
       {
         name: `${searchCriteria.manufacturer} ${searchCriteria.model} - Vollset`,
@@ -54,7 +54,7 @@ export async function POST() {
         source_type: 'Dealer',
         availability: 'Available',
         url_hash: 'test_hash_002_' + Date.now(),
-        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
+        image_url: searchCriteria.image_url || 'https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/2025/upright-c/m126710blro-0001',
       },
       {
         name: `${searchCriteria.manufacturer} ${searchCriteria.model} - Box & Papiere`,
@@ -74,7 +74,7 @@ export async function POST() {
         source_type: 'Marketplace',
         availability: 'Available',
         url_hash: 'test_hash_003_' + Date.now(),
-        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
+        image_url: searchCriteria.image_url || 'https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/2025/upright-c/m126710blro-0001',
       },
     ]
 
