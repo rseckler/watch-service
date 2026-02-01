@@ -1,73 +1,62 @@
-import { sql } from '@vercel/postgres'
-
-// Helper functions for database queries using Neon PostgreSQL
+// Database client for Watch Service using API routes
+// Client components call these functions which fetch from /api/* endpoints
 
 export const db = {
   // Sources
   getSources: async () => {
-    const { rows } = await sql`
-      SELECT * FROM watch_sources ORDER BY name
-    `
-    return rows
+    const res = await fetch('/api/sources')
+    if (!res.ok) throw new Error('Failed to fetch sources')
+    return res.json()
   },
 
   getActiveSources: async () => {
-    const { rows } = await sql`
-      SELECT * FROM watch_sources WHERE active = true ORDER BY name
-    `
-    return rows
+    const sources = await db.getSources()
+    return sources.filter((s: any) => s.active)
   },
 
   updateSource: async (id: string, updates: any) => {
-    const fields = Object.keys(updates)
-    const values = Object.values(updates)
-
-    const setClause = fields.map((field, i) => `${field} = $${i + 2}`).join(', ')
-
-    const { rows } = await sql.query(
-      `UPDATE watch_sources SET ${setClause} WHERE id = $1 RETURNING *`,
-      [id, ...values]
-    )
-    return rows[0]
+    const res = await fetch('/api/sources', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates }),
+    })
+    if (!res.ok) throw new Error('Failed to update source')
+    return res.json()
   },
 
   // Search Criteria
   getCriteria: async () => {
-    const { rows } = await sql`
-      SELECT * FROM watch_search_criteria ORDER BY created_at DESC
-    `
-    return rows
+    const res = await fetch('/api/criteria')
+    if (!res.ok) throw new Error('Failed to fetch criteria')
+    return res.json()
   },
 
   createCriteria: async (criteria: any) => {
-    const { rows } = await sql`
-      INSERT INTO watch_search_criteria (
-        name, manufacturer, model, reference_number, year, allowed_countries, active, notes
-      ) VALUES (
-        ${criteria.name}, ${criteria.manufacturer}, ${criteria.model},
-        ${criteria.reference_number || null}, ${criteria.year || null},
-        ${criteria.allowed_countries || []}, ${criteria.active !== false},
-        ${criteria.notes || null}
-      ) RETURNING *
-    `
-    return rows[0]
+    const res = await fetch('/api/criteria', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(criteria),
+    })
+    if (!res.ok) throw new Error('Failed to create criteria')
+    return res.json()
   },
 
   updateCriteria: async (id: string, updates: any) => {
-    const fields = Object.keys(updates)
-    const values = Object.values(updates)
-
-    const setClause = fields.map((field, i) => `${field} = $${i + 2}`).join(', ')
-
-    const { rows } = await sql.query(
-      `UPDATE watch_search_criteria SET ${setClause} WHERE id = $1 RETURNING *`,
-      [id, ...values]
-    )
-    return rows[0]
+    const res = await fetch('/api/criteria', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, updates }),
+    })
+    if (!res.ok) throw new Error('Failed to update criteria')
+    return res.json()
   },
 
   deleteCriteria: async (id: string) => {
-    await sql`DELETE FROM watch_search_criteria WHERE id = ${id}`
+    const res = await fetch(`/api/criteria?id=${id}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) throw new Error('Failed to delete criteria')
+    return res.json()
   },
 
   // Listings
@@ -76,54 +65,27 @@ export const db = {
     availability?: string
     limit?: number
   }) => {
-    let query = 'SELECT * FROM watch_listings WHERE 1=1'
-    const params: any[] = []
-    let paramIndex = 1
+    const params = new URLSearchParams()
+    if (filters?.source) params.append('source', filters.source)
+    if (filters?.availability) params.append('availability', filters.availability)
+    if (filters?.limit) params.append('limit', filters.limit.toString())
 
-    if (filters?.source) {
-      query += ` AND source = $${paramIndex++}`
-      params.push(filters.source)
-    }
-    if (filters?.availability) {
-      query += ` AND availability = $${paramIndex++}`
-      params.push(filters.availability)
-    }
-
-    query += ' ORDER BY date_found DESC'
-
-    if (filters?.limit) {
-      query += ` LIMIT $${paramIndex++}`
-      params.push(filters.limit)
-    }
-
-    const { rows } = await sql.query(query, params)
-    return rows
+    const res = await fetch(`/api/listings?${params}`)
+    if (!res.ok) throw new Error('Failed to fetch listings')
+    return res.json()
   },
 
   // Sync History
   getSyncHistory: async (limit: number = 10) => {
-    const { rows } = await sql`
-      SELECT * FROM watch_sync_history ORDER BY date DESC LIMIT ${limit}
-    `
-    return rows
+    const res = await fetch(`/api/listings?limit=${limit}`)
+    if (!res.ok) throw new Error('Failed to fetch sync history')
+    return res.json()
   },
 
   // Statistics
   getStats: async () => {
-    const [sources, criteria, listings, availableListings, syncHistory] = await Promise.all([
-      sql`SELECT COUNT(*) as count FROM watch_sources`,
-      sql`SELECT COUNT(*) as count FROM watch_search_criteria`,
-      sql`SELECT COUNT(*) as count FROM watch_listings`,
-      sql`SELECT COUNT(*) as count FROM watch_listings WHERE availability = 'Available'`,
-      sql`SELECT * FROM watch_sync_history ORDER BY date DESC LIMIT 1`,
-    ])
-
-    return {
-      totalSources: parseInt(sources.rows[0].count),
-      totalCriteria: parseInt(criteria.rows[0].count),
-      totalListings: parseInt(listings.rows[0].count),
-      availableListings: parseInt(availableListings.rows[0].count),
-      lastSync: syncHistory.rows[0] || null,
-    }
+    const res = await fetch('/api/stats')
+    if (!res.ok) throw new Error('Failed to fetch stats')
+    return res.json()
   },
 }
