@@ -1,10 +1,13 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
-import { Database as DatabaseIcon, Search, List, CheckCircle, Clock, TrendingUp, AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Database as DatabaseIcon, Search, List, CheckCircle, Clock, TrendingUp, AlertCircle, PlayCircle, Loader2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useEffect } from 'react'
 
 type Listing = any
 type SyncHistory = any
@@ -18,6 +21,8 @@ interface Stats {
 }
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient()
+
   const { data: stats, isLoading } = useQuery<Stats>({
     queryKey: ['stats'],
     queryFn: () => db.getStats(),
@@ -32,6 +37,39 @@ export default function DashboardPage() {
     queryKey: ['sync-history'],
     queryFn: () => db.getSyncHistory(5),
   })
+
+  const { data: searchStatus } = useQuery({
+    queryKey: ['search-status'],
+    queryFn: () => db.getSearchStatus(),
+    refetchInterval: (data) => (data?.isRunning ? 1000 : false),
+  })
+
+  const triggerSearchMutation = useMutation({
+    mutationFn: () => db.triggerSearch(),
+    onSuccess: () => {
+      toast.success('Suche gestartet!', {
+        description: 'Die Quellen werden jetzt durchsucht...',
+      })
+      queryClient.invalidateQueries({ queryKey: ['search-status'] })
+    },
+    onError: (error: Error) => {
+      toast.error('Fehler beim Starten', {
+        description: error.message,
+      })
+    },
+  })
+
+  useEffect(() => {
+    if (searchStatus?.isRunning === false && searchStatus?.startedAt) {
+      // Search just finished, refresh data
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+      queryClient.invalidateQueries({ queryKey: ['recent-listings'] })
+      queryClient.invalidateQueries({ queryKey: ['sync-history'] })
+      toast.success('Suche abgeschlossen!', {
+        description: `${searchStatus.progress.sourcesChecked} Quellen durchsucht`,
+      })
+    }
+  }, [searchStatus?.isRunning])
 
   if (isLoading) {
     return (
@@ -75,11 +113,30 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Übersicht über dein Watch Service Monitoring
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
+            Übersicht über dein Watch Service Monitoring
+          </p>
+        </div>
+        <Button
+          onClick={() => triggerSearchMutation.mutate()}
+          disabled={searchStatus?.isRunning || triggerSearchMutation.isPending}
+          className="gap-2"
+        >
+          {searchStatus?.isRunning ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Suche läuft... ({searchStatus.progress.sourcesChecked}/{searchStatus.progress.totalSources})
+            </>
+          ) : (
+            <>
+              <PlayCircle className="h-4 w-4" />
+              Suche starten
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Stats Grid */}

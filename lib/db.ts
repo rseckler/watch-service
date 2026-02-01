@@ -88,4 +88,22 @@ export const db = {
     if (!res.ok) throw new Error('Failed to fetch stats')
     return res.json()
   },
+
+  // Manual Search Trigger
+  triggerSearch: async () => {
+    const res = await fetch('/api/search/trigger', {
+      method: 'POST',
+    })
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.error || 'Failed to trigger search')
+    }
+    return res.json()
+  },
+
+  getSearchStatus: async () => {
+    const res = await fetch('/api/search/trigger')
+    if (!res.ok) throw new Error('Failed to get search status')
+    return res.json()
+  },
 }
