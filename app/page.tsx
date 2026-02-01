@@ -205,8 +205,18 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {recentListings.map((listing) => (
               <Card key={listing.id} className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start gap-4">
+                  {listing.image_url && (
+                    <img
+                      src={listing.image_url}
+                      alt={`${listing.manufacturer} ${listing.model}`}
+                      className="h-20 w-20 object-cover rounded border flex-shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold">
                       {listing.manufacturer} {listing.model}
                     </h3>
@@ -220,7 +230,7 @@ export default function DashboardPage() {
                       <span>{formatDate(listing.date_found)}</span>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     {listing.price && (
                       <p className="text-lg font-bold">
                         {new Intl.NumberFormat('de-DE', {

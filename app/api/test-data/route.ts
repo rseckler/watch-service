@@ -34,6 +34,7 @@ export async function POST() {
         source_type: 'Dealer',
         availability: 'Available',
         url_hash: 'test_hash_001_' + Date.now(),
+        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
       },
       {
         name: `${searchCriteria.manufacturer} ${searchCriteria.model} - Vollset`,
@@ -53,6 +54,7 @@ export async function POST() {
         source_type: 'Dealer',
         availability: 'Available',
         url_hash: 'test_hash_002_' + Date.now(),
+        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
       },
       {
         name: `${searchCriteria.manufacturer} ${searchCriteria.model} - Box & Papiere`,
@@ -72,6 +74,7 @@ export async function POST() {
         source_type: 'Marketplace',
         availability: 'Available',
         url_hash: 'test_hash_003_' + Date.now(),
+        image_url: searchCriteria.image_url || 'https://www.rolex.com/content/dam/new-watches-2024/configure-hub/m126710blro-0001/1-configure/configure-2024-gmt-master-ii-m126710blro-0001_portrait.png',
       },
     ]
 
@@ -83,7 +86,7 @@ export async function POST() {
           name, manufacturer, model, reference_number, year, condition,
           price, currency, location, country, link, seller_name, seller_url,
           source, source_type, availability, url_hash, search_criteria_id,
-          date_found, last_checked
+          image_url, date_found, last_checked
         ) VALUES (
           ${listing.name}, ${listing.manufacturer}, ${listing.model},
           ${listing.reference_number}, ${listing.year}, ${listing.condition},
@@ -91,7 +94,7 @@ export async function POST() {
           ${listing.country}, ${listing.link}, ${listing.seller_name},
           ${listing.seller_url}, ${listing.source}, ${listing.source_type},
           ${listing.availability}, ${listing.url_hash}, ${searchCriteria.id},
-          NOW(), NOW()
+          ${listing.image_url}, NOW(), NOW()
         ) RETURNING *
       `
       insertedListings.push(rows[0])

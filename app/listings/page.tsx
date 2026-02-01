@@ -137,6 +137,17 @@ export default function ListingsPage() {
             {filteredListings.map((listing) => (
               <Card key={listing.id} className="p-5">
                 <div className="flex items-start justify-between gap-4">
+                  {/* Watch Image */}
+                  {listing.image_url && (
+                    <img
+                      src={listing.image_url}
+                      alt={`${listing.manufacturer} ${listing.model}`}
+                      className="h-24 w-24 object-cover rounded border flex-shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )}
                   {/* Main Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-3">

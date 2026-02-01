@@ -1,23 +1,30 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
-import { CheckCircle, AlertCircle, XCircle, Clock, Database, List as ListIcon, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { CheckCircle, AlertCircle, XCircle, Clock, Database, List as ListIcon, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 type SyncHistory = any
 
 export default function LogsPage() {
+  const [showArchive, setShowArchive] = useState(false)
+
   const { data: logs, isLoading, refetch } = useQuery<SyncHistory[]>({
     queryKey: ['sync-history'],
     queryFn: async () => {
-      const res = await fetch('/api/sync-history?limit=50')
+      const res = await fetch('/api/sync-history?limit=100')
       if (!res.ok) throw new Error('Failed to fetch logs')
       return res.json()
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   })
+
+  const recentLogs = logs?.slice(0, 10) || []
+  const archivedLogs = logs?.slice(10) || []
 
   if (isLoading) {
     return (
@@ -122,10 +129,13 @@ export default function LogsPage() {
         </div>
       )}
 
-      {/* Logs Timeline */}
-      {logs && logs.length > 0 ? (
-        <div className="space-y-3">
-          {logs.map((log) => (
+      {/* Recent Logs */}
+      {recentLogs && recentLogs.length > 0 ? (
+        <>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Aktuelle Logs (letzte 10)</h2>
+            <div className="space-y-3">
+              {recentLogs.map((log) => (
             <Card
               key={log.id}
               className={`p-5 border-l-4 ${getStatusColor(log.status)}`}
@@ -184,7 +194,96 @@ export default function LogsPage() {
               </div>
             </Card>
           ))}
-        </div>
+            </div>
+          </div>
+
+          {/* Archive Section */}
+          {archivedLogs.length > 0 && (
+            <div className="mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setShowArchive(!showArchive)}
+                className="w-full flex items-center justify-center gap-2 mb-4"
+              >
+                {showArchive ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Archiv ausblenden ({archivedLogs.length} ältere Logs)
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Archiv anzeigen ({archivedLogs.length} ältere Logs)
+                  </>
+                )}
+              </Button>
+
+              {showArchive && (
+                <div className="space-y-3">
+                  {archivedLogs.map((log) => (
+                    <Card
+                      key={log.id}
+                      className={`p-5 border-l-4 opacity-75 ${getStatusColor(log.status)}`}
+                    >
+                      <div className="flex items-start gap-4">
+                        {getStatusIcon(log.status)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-lg">{log.name}</h3>
+                            <span className="text-sm text-muted-foreground">
+                              {formatDate(log.date)}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Status</p>
+                              <p className="font-medium">{log.status}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Quellen geprüft</p>
+                              <p className="font-medium">
+                                {log.sources_checked}
+                                {log.sources_failed > 0 && (
+                                  <span className="text-red-600 ml-1">
+                                    (-{log.sources_failed})
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Listings gefunden</p>
+                              <p className="font-medium">{log.listings_found || 0}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Neue gespeichert</p>
+                              <p className="font-medium text-green-600">
+                                {log.listings_saved || 0}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Duplikate: {log.duplicates_skipped || 0}</span>
+                            <span>•</span>
+                            <span>Dauer: {log.duration_seconds}s</span>
+                          </div>
+
+                          {log.error_message && (
+                            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+                              <p className="font-medium">Fehler:</p>
+                              <p className="mt-1">{log.error_message}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <Card className="p-12 text-center">
           <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
