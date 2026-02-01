@@ -1,0 +1,2 @@
+Name,Date,Status,Sources_Checked,Sources_Failed,Listings_Found,Listings_Saved,Duplicates_Skipped,Duration_Seconds,Error_Message
+Initial Test,2026-02-01,Success,1,0,5,3,2,45,

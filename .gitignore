@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Sessions & Cache
+.sessions/
+*.pkl
+
+# Logs
+*.log
+watch_service.log
+availability_check.log
+test_system.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scrapers
+chromedriver
+geckodriver
+
+# Temporary files
+tmp/
+temp/
+*.tmp
