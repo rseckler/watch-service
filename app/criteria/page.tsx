@@ -161,7 +161,6 @@ export default function CriteriaPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
               <div className="text-xs text-muted-foreground pt-3 border-t">
                 Erstellt: {formatDate(item.created_at)}
               </div>
