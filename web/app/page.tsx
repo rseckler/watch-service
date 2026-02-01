@@ -10,8 +10,16 @@ import { Database } from '@/lib/types'
 type Listing = Database['public']['Tables']['watch_listings']['Row']
 type SyncHistory = Database['public']['Tables']['watch_sync_history']['Row']
 
+interface Stats {
+  totalSources: number
+  totalCriteria: number
+  totalListings: number
+  availableListings: number
+  lastSync: SyncHistory | null
+}
+
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<Stats>({
     queryKey: ['stats'],
     queryFn: () => db.getStats(),
   })
