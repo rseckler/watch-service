@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { X } from 'lucide-react'
+import { X, Search, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 type Criteria = any
 
@@ -44,6 +45,7 @@ export function CriteriaDialog({
     notes: '',
     image_url: '',
   })
+  const [fetchingImage, setFetchingImage] = useState(false)
 
   useEffect(() => {
     if (editingCriteria) {
@@ -118,6 +120,43 @@ export function CriteriaDialog({
         ? prev.allowed_countries.filter((c) => c !== country)
         : [...prev.allowed_countries, country],
     }))
+  }
+
+  const handleFetchImage = async () => {
+    if (!formData.manufacturer || !formData.model) {
+      toast.error('Hersteller und Modell müssen ausgefüllt sein')
+      return
+    }
+
+    setFetchingImage(true)
+    try {
+      const response = await fetch('/api/fetch-watch-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          manufacturer: formData.manufacturer,
+          model: formData.model,
+          referenceNumber: formData.reference_number,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Bild konnte nicht gefunden werden')
+      }
+
+      const data = await response.json()
+      setFormData((prev) => ({ ...prev, image_url: data.imageUrl }))
+      toast.success('Offizielles Produktbild gefunden!', {
+        description: 'Das Bild wurde automatisch vom Hersteller geladen',
+      })
+    } catch (error: any) {
+      toast.error('Bild nicht gefunden', {
+        description: error.message || 'Versuche es mit einer manuellen URL',
+      })
+    } finally {
+      setFetchingImage(false)
+    }
   }
 
   if (!open) return null
@@ -198,17 +237,41 @@ export function CriteriaDialog({
           {/* Image URL */}
           <div>
             <Label htmlFor="image_url">Bild-URL (optional)</Label>
-            <Input
-              id="image_url"
-              type="url"
-              value={formData.image_url}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, image_url: e.target.value }))
-              }
-              placeholder="https://example.com/watch-image.jpg"
-            />
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="image_url"
+                type="url"
+                value={formData.image_url}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, image_url: e.target.value }))
+                }
+                placeholder="https://example.com/watch-image.jpg"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleFetchImage}
+                disabled={fetchingImage || !formData.manufacturer || !formData.model}
+                className="flex-shrink-0"
+              >
+                {fetchingImage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Suche...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Auto-Suche
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Die Auto-Suche findet offizielle Produktbilder direkt beim Hersteller
+            </p>
             {formData.image_url && (
-              <div className="mt-2">
+              <div className="mt-3">
                 <img
                   src={formData.image_url}
                   alt="Preview"
