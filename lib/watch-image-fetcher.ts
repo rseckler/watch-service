@@ -56,8 +56,23 @@ export async function fetchWatchImage(params: WatchImageParams): Promise<string 
 async function fetchRolexImage(referenceNumber: string, model: string): Promise<string | null> {
   if (!referenceNumber) return null
 
-  // Remove any dashes or spaces from reference number
-  const cleanRef = referenceNumber.replace(/[-\s]/g, '')
+  // Normalize reference number: lowercase and ensure proper dash format
+  // Rolex format: 126710blro-0001 (dash before last segment)
+  let cleanRef = referenceNumber.toLowerCase().trim()
+
+  // Remove spaces
+  cleanRef = cleanRef.replace(/\s+/g, '')
+
+  // Ensure there's a dash before the last 4 digits if not present
+  // Examples: 126710BLRO0001 -> 126710blro-0001, 126710BLRO-0001 -> 126710blro-0001
+  if (!cleanRef.includes('-')) {
+    // Try to add dash before last 4 digits
+    if (cleanRef.length > 4) {
+      cleanRef = cleanRef.slice(0, -4) + '-' + cleanRef.slice(-4)
+    }
+  }
+
+  console.log('Rolex reference normalized:', cleanRef)
 
   // Try current year and previous years (Rolex updates their catalogue annually)
   const currentYear = new Date().getFullYear()
@@ -65,21 +80,28 @@ async function fetchRolexImage(referenceNumber: string, model: string): Promise<
 
   for (const year of years) {
     // Rolex pattern: m + reference number (e.g., m126710blro-0001)
-    const imageUrl = `https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/${year}/upright-c/m${cleanRef.toLowerCase()}`
+    const imageUrl = `https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/${year}/upright-c/m${cleanRef}`
+
+    console.log('Trying Rolex URL:', imageUrl)
 
     // Check if image exists
     if (await checkImageExists(imageUrl)) {
+      console.log('✓ Found Rolex image:', imageUrl)
       return imageUrl
     }
   }
 
   // Fallback: Try without year in path (older Rolex images)
-  const fallbackUrl = `https://content.rolex.com/dam/new-watches-2024/configure-hub/m${cleanRef.toLowerCase()}/1-configure/configure-2024-${model.toLowerCase().replace(/\s+/g, '-')}-m${cleanRef.toLowerCase()}_portrait.png`
+  const fallbackUrl = `https://content.rolex.com/dam/new-watches-2024/configure-hub/m${cleanRef}/1-configure/configure-2024-${model.toLowerCase().replace(/\s+/g, '-')}-m${cleanRef}_portrait.png`
+
+  console.log('Trying Rolex fallback URL:', fallbackUrl)
 
   if (await checkImageExists(fallbackUrl)) {
+    console.log('✓ Found Rolex image (fallback):', fallbackUrl)
     return fallbackUrl
   }
 
+  console.log('✗ No Rolex image found for reference:', referenceNumber)
   return null
 }
 
