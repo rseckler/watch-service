@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Watch, Search, List, Database, BarChart3 } from 'lucide-react'
+import { Watch, Search, List, Database, BarChart3, ScrollText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/criteria', label: 'Suchkriterien', icon: Search },
   { href: '/listings', label: 'Listings', icon: List },
   { href: '/sources', label: 'Quellen', icon: Database },
+  { href: '/logs', label: 'Logs', icon: ScrollText },
 ]
 
 export function Navigation() {

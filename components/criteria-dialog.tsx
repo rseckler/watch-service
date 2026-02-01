@@ -42,6 +42,7 @@ export function CriteriaDialog({
     allowed_countries: [] as string[],
     active: true,
     notes: '',
+    image_url: '',
   })
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export function CriteriaDialog({
         allowed_countries: editingCriteria.allowed_countries || [],
         active: editingCriteria.active,
         notes: editingCriteria.notes || '',
+        image_url: editingCriteria.image_url || '',
       })
     } else {
       setFormData({
@@ -64,9 +66,10 @@ export function CriteriaDialog({
         allowed_countries: ['Germany'],
         active: true,
         notes: '',
+        image_url: '',
       })
     }
-  }, [editingCriteria])
+  }, [editingCriteria, open])
 
   const createMutation = useMutation({
     mutationFn: (data: any) =>
@@ -98,6 +101,7 @@ export function CriteriaDialog({
       allowed_countries: formData.allowed_countries.length > 0 ? formData.allowed_countries : null,
       active: formData.active,
       notes: formData.notes || null,
+      image_url: formData.image_url || null,
     }
 
     if (editingCriteria) {
@@ -189,6 +193,32 @@ export function CriteriaDialog({
               min="1900"
               max={new Date().getFullYear()}
             />
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <Label htmlFor="image_url">Bild-URL (optional)</Label>
+            <Input
+              id="image_url"
+              type="url"
+              value={formData.image_url}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, image_url: e.target.value }))
+              }
+              placeholder="https://example.com/watch-image.jpg"
+            />
+            {formData.image_url && (
+              <div className="mt-2">
+                <img
+                  src={formData.image_url}
+                  alt="Preview"
+                  className="h-32 w-32 object-cover rounded border"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Allowed Countries */}

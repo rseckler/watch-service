@@ -85,8 +85,18 @@ export default function CriteriaPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {criteria.map((item) => (
             <Card key={item.id} className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
+              <div className="flex gap-4 mb-4">
+                {item.image_url && (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="h-24 w-24 object-cover rounded border flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                )}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-semibold">{item.name}</h3>
                     <button
@@ -131,7 +141,8 @@ export default function CriteriaPage() {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-2 ml-4">
+              </div>
+              <div className="flex justify-end gap-2">
                   <Button
                     variant="ghost"
                     size="icon"
