@@ -1,6 +1,7 @@
 /**
  * Watch Image Fetcher
  * Automatically fetches official product images from manufacturer websites
+ * Uses pattern matching + OpenAI fallback for reliability
  */
 
 interface WatchImageParams {
@@ -9,8 +10,15 @@ interface WatchImageParams {
   referenceNumber?: string
 }
 
+interface OpenAIImageResponse {
+  imageUrl: string
+  confidence: 'high' | 'medium' | 'low'
+  source: string
+}
+
 /**
  * Attempts to fetch the official product image from the manufacturer's website
+ * Strategy: Pattern matching first, then OpenAI fallback
  */
 export async function fetchWatchImage(params: WatchImageParams): Promise<string | null> {
   const { manufacturer, model, referenceNumber } = params
@@ -19,29 +27,38 @@ export async function fetchWatchImage(params: WatchImageParams): Promise<string 
   const normalizedManufacturer = manufacturer.toLowerCase().trim()
 
   try {
-    // Try manufacturer-specific fetchers
+    // STAGE 1: Try manufacturer-specific pattern matching (fast, free)
+    console.log('🔍 Stage 1: Trying pattern-based image search...')
+
+    let imageUrl: string | null = null
+
     if (normalizedManufacturer.includes('rolex')) {
-      return await fetchRolexImage(referenceNumber || '', model)
+      imageUrl = await fetchRolexImage(referenceNumber || '', model)
+    } else if (normalizedManufacturer.includes('omega')) {
+      imageUrl = await fetchOmegaImage(referenceNumber || '', model)
+    } else if (normalizedManufacturer.includes('patek') || normalizedManufacturer.includes('philippe')) {
+      imageUrl = await fetchPatekPhilippeImage(referenceNumber || '', model)
+    } else if (normalizedManufacturer.includes('audemars') || normalizedManufacturer.includes('piguet')) {
+      imageUrl = await fetchAudemarsPiguetImage(referenceNumber || '', model)
+    } else if (normalizedManufacturer.includes('iwc')) {
+      imageUrl = await fetchIWCImage(referenceNumber || '', model)
     }
 
-    if (normalizedManufacturer.includes('omega')) {
-      return await fetchOmegaImage(referenceNumber || '', model)
+    if (imageUrl) {
+      console.log('✓ Found image via pattern matching:', imageUrl)
+      return imageUrl
     }
 
-    if (normalizedManufacturer.includes('patek') || normalizedManufacturer.includes('philippe')) {
-      return await fetchPatekPhilippeImage(referenceNumber || '', model)
+    // STAGE 2: Pattern matching failed, use OpenAI (intelligent, small cost)
+    console.log('🤖 Stage 2: Pattern failed, using OpenAI...')
+    imageUrl = await fetchImageViaOpenAI(params)
+
+    if (imageUrl) {
+      console.log('✓ Found image via OpenAI:', imageUrl)
+      return imageUrl
     }
 
-    if (normalizedManufacturer.includes('audemars') || normalizedManufacturer.includes('piguet')) {
-      return await fetchAudemarsPiguetImage(referenceNumber || '', model)
-    }
-
-    if (normalizedManufacturer.includes('iwc')) {
-      return await fetchIWCImage(referenceNumber || '', model)
-    }
-
-    // Add more manufacturers as needed
-
+    console.log('✗ No image found via any method')
     return null
   } catch (error) {
     console.error('Error fetching watch image:', error)
@@ -151,6 +168,101 @@ async function fetchIWCImage(referenceNumber: string, model: string): Promise<st
 
   // IWC pattern - placeholder
   return null
+}
+
+/**
+ * Use OpenAI to intelligently find the official product image
+ * Falls back when pattern matching fails
+ */
+async function fetchImageViaOpenAI(params: WatchImageParams): Promise<string | null> {
+  const { manufacturer, model, referenceNumber } = params
+
+  try {
+    // Get OpenAI API key from environment
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      console.error('OpenAI API key not found')
+      return null
+    }
+
+    // Construct prompt for OpenAI
+    const prompt = `You are an expert in luxury watch product image URLs. Given the following watch details, provide the most likely official product image URL from the manufacturer's website.
+
+Watch Details:
+- Manufacturer: ${manufacturer}
+- Model: ${model}
+- Reference Number: ${referenceNumber || 'Unknown'}
+
+IMPORTANT RULES:
+1. ONLY provide the official image URL from the manufacturer's CDN/media server
+2. For Rolex: Use format https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-majesty/c_limit,w_1200/v1/catalogue/{YEAR}/upright-c/m{reference-lowercase}
+3. For Omega: Use format https://www.omegawatches.com/media/catalog/product/...
+4. Prefer high-resolution product images (not thumbnails)
+5. Respond with ONLY the URL, nothing else
+6. If unsure, try multiple common URL patterns for this manufacturer
+
+Respond with the most likely image URL:`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert at finding official luxury watch product images. Always provide direct image URLs from manufacturer websites.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 200,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('OpenAI API error:', response.status)
+      return null
+    }
+
+    const data = await response.json()
+    const imageUrl = data.choices?.[0]?.message?.content?.trim()
+
+    if (!imageUrl || !isValidImageUrl(imageUrl)) {
+      console.log('OpenAI did not return a valid image URL')
+      return null
+    }
+
+    // Verify the URL actually exists
+    if (await checkImageExists(imageUrl)) {
+      return imageUrl
+    }
+
+    // OpenAI suggested a URL but it doesn't exist
+    console.log('OpenAI suggested URL does not exist:', imageUrl)
+
+    // Try variations of the suggested URL (different years for Rolex, etc.)
+    if (manufacturer.toLowerCase().includes('rolex')) {
+      const currentYear = new Date().getFullYear()
+      for (let year = currentYear; year >= currentYear - 3; year--) {
+        const yearUrl = imageUrl.replace(/\/catalogue\/\d{4}\//, `/catalogue/${year}/`)
+        if (await checkImageExists(yearUrl)) {
+          return yearUrl
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error using OpenAI for image search:', error)
+    return null
+  }
 }
 
 /**
