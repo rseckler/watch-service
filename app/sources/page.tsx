@@ -5,13 +5,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ToggleLeft, ToggleRight, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
+import { ToggleLeft, ToggleRight, ExternalLink, AlertCircle, CheckCircle, Plus, Edit } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { SourceDialog } from '@/components/source-dialog'
 
 type Source = any
 
 export default function SourcesPage() {
   const queryClient = useQueryClient()
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingSource, setEditingSource] = useState<Source | null>(null)
 
   const { data: sources, isLoading } = useQuery<Source[]>({
     queryKey: ['sources'],
@@ -30,6 +33,16 @@ export default function SourcesPage() {
     toggleActiveMutation.mutate({ id, active: !currentActive })
   }
 
+  const handleEdit = (source: Source) => {
+    setEditingSource(source)
+    setDialogOpen(true)
+  }
+
+  const handleAdd = () => {
+    setEditingSource(null)
+    setDialogOpen(true)
+  }
+
   const activeCount = sources?.filter((s) => s.active).length || 0
   const errorCount = sources?.filter((s) => s.error_count > 0).length || 0
 
@@ -44,11 +57,17 @@ export default function SourcesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Quellen</h1>
-        <p className="text-muted-foreground mt-2">
-          Verwalte die Webseiten, die durchsucht werden
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Quellen</h1>
+          <p className="text-muted-foreground mt-2">
+            Verwalte die Webseiten, die durchsucht werden
+          </p>
+        </div>
+        <Button onClick={handleAdd} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Neue Quelle
+        </Button>
       </div>
 
       {/* Stats */}
@@ -108,6 +127,13 @@ export default function SourcesPage() {
                             <ToggleLeft className="h-5 w-5" />
                           )}
                         </button>
+                        <button
+                          onClick={() => handleEdit(source)}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          title="Bearbeiten"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
                       </div>
                       <a
                         href={source.url}
@@ -163,6 +189,12 @@ export default function SourcesPage() {
           </div>
         )
       })}
+
+      <SourceDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        editingSource={editingSource}
+      />
     </div>
   )
 }
