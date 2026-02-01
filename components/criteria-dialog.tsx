@@ -69,7 +69,7 @@ export function CriteriaDialog({
   }, [editingCriteria])
 
   const createMutation = useMutation({
-    mutationFn: (data: Database['public']['Tables']['watch_search_criteria']['Insert']) =>
+    mutationFn: (data: any) =>
       db.createCriteria(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['criteria'] })
@@ -78,7 +78,7 @@ export function CriteriaDialog({
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Database['public']['Tables']['watch_search_criteria']['Update']> }) =>
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       db.updateCriteria(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['criteria'] })
