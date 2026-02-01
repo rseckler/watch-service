@@ -41,7 +41,7 @@ export default function DashboardPage() {
   const { data: searchStatus } = useQuery({
     queryKey: ['search-status'],
     queryFn: () => db.getSearchStatus(),
-    refetchInterval: (data) => (data?.isRunning ? 1000 : false),
+    refetchInterval: (query) => (query.state.data?.isRunning ? 1000 : false),
   })
 
   const triggerSearchMutation = useMutation({
