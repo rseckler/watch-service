@@ -8,13 +8,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ExternalLink, Filter, X } from 'lucide-react'
 import { formatDate, formatPrice } from '@/lib/utils'
+import { Database } from '@/lib/types'
+
+type Listing = Database['public']['Tables']['watch_listings']['Row']
+type Source = Database['public']['Tables']['watch_sources']['Row']
 
 export default function ListingsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const { data: listings, isLoading } = useQuery({
+  const { data: listings, isLoading } = useQuery<Listing[]>({
     queryKey: ['listings', availabilityFilter, sourceFilter],
     queryFn: () =>
       db.getListings({
@@ -23,7 +27,7 @@ export default function ListingsPage() {
       }),
   })
 
-  const { data: sources } = useQuery({
+  const { data: sources } = useQuery<Source[]>({
     queryKey: ['sources'],
     queryFn: () => db.getSources(),
   })

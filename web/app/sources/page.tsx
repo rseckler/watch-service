@@ -7,11 +7,14 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ToggleLeft, ToggleRight, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { Database } from '@/lib/types'
+
+type Source = Database['public']['Tables']['watch_sources']['Row']
 
 export default function SourcesPage() {
   const queryClient = useQueryClient()
 
-  const { data: sources, isLoading } = useQuery({
+  const { data: sources, isLoading } = useQuery<Source[]>({
     queryKey: ['sources'],
     queryFn: () => db.getSources(),
   })

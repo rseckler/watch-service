@@ -3,8 +3,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { db } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
-import { Database, Search, List, CheckCircle, Clock, TrendingUp, AlertCircle } from 'lucide-react'
+import { Database as DatabaseIcon, Search, List, CheckCircle, Clock, TrendingUp, AlertCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { Database } from '@/lib/types'
+
+type Listing = Database['public']['Tables']['watch_listings']['Row']
+type SyncHistory = Database['public']['Tables']['watch_sync_history']['Row']
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useQuery({
@@ -12,12 +16,12 @@ export default function DashboardPage() {
     queryFn: () => db.getStats(),
   })
 
-  const { data: recentListings } = useQuery({
+  const { data: recentListings } = useQuery<Listing[]>({
     queryKey: ['recent-listings'],
     queryFn: () => db.getListings({ limit: 5 }),
   })
 
-  const { data: syncHistory } = useQuery({
+  const { data: syncHistory } = useQuery<SyncHistory[]>({
     queryKey: ['sync-history'],
     queryFn: () => db.getSyncHistory(5),
   })
@@ -34,7 +38,7 @@ export default function DashboardPage() {
     {
       title: 'Quellen',
       value: stats?.totalSources || 0,
-      icon: Database,
+      icon: DatabaseIcon,
       description: 'Aktive Suchquellen',
       color: 'text-blue-600',
     },

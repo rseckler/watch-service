@@ -17,7 +17,7 @@ export default function CriteriaPage() {
   const [editingCriteria, setEditingCriteria] = useState<Criteria | null>(null)
   const queryClient = useQueryClient()
 
-  const { data: criteria, isLoading } = useQuery({
+  const { data: criteria, isLoading } = useQuery<Criteria[]>({
     queryKey: ['criteria'],
     queryFn: () => db.getCriteria(),
   })
