@@ -140,7 +140,7 @@ async function checkImageExists(url: string): Promise<boolean> {
       method: 'HEAD',
       cache: 'no-cache',
     })
-    return response.ok && response.headers.get('content-type')?.startsWith('image/')
+    return response.ok && (response.headers.get('content-type')?.startsWith('image/') ?? false)
   } catch {
     return false
   }
