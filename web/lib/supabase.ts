@@ -28,7 +28,7 @@ export const db = {
     return data
   },
 
-  updateSource: async (id: string, updates: Partial<Database['public']['Tables']['watch_sources']['Update']>) => {
+  updateSource: async (id: string, updates: any) => {
     const { data, error } = await supabase
       .from('watch_sources')
       .update(updates)
@@ -59,7 +59,7 @@ export const db = {
     return data
   },
 
-  updateCriteria: async (id: string, updates: Partial<Database['public']['Tables']['watch_search_criteria']['Update']>) => {
+  updateCriteria: async (id: string, updates: any) => {
     const { data, error } = await supabase
       .from('watch_search_criteria')
       .update(updates)
