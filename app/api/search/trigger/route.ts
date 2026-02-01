@@ -62,15 +62,15 @@ async function runSearch() {
 
   try {
     // 1. Get active sources
-    const { rows: sources } = await sql\`
+    const { rows: sources } = await sql`
       SELECT * FROM watch_sources WHERE active = true ORDER BY name
-    \`
+    `
     currentSearchStatus.progress.totalSources = sources.length
 
     // 2. Get active search criteria
-    const { rows: criteria } = await sql\`
+    const { rows: criteria } = await sql`
       SELECT * FROM watch_search_criteria WHERE active = true
-    \`
+    `
 
     if (criteria.length === 0) {
       throw new Error('No active search criteria found')
@@ -88,26 +88,26 @@ async function runSearch() {
         // Simulate search delay
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        console.log(\`Searched \${source.name}\`)
+        console.log(`Searched ${source.name}`)
 
         // Update last successful scrape
-        await sql\`
+        await sql`
           UPDATE watch_sources
           SET last_successful_scrape = NOW(), error_count = 0
-          WHERE id = \${source.id}
-        \`
+          WHERE id = ${source.id}
+        `
       } catch (error: any) {
         failedSources++
         currentSearchStatus.progress.errors.push(
-          \`\${source.name}: \${error.message}\`
+          `${source.name}: ${error.message}`
         )
 
         // Update error count
-        await sql\`
+        await sql`
           UPDATE watch_sources
           SET error_count = error_count + 1
-          WHERE id = \${source.id}
-        \`
+          WHERE id = ${source.id}
+        `
       }
     }
 
@@ -115,22 +115,22 @@ async function runSearch() {
     const duration = Math.floor((Date.now() - startTime) / 1000)
     const status = failedSources === 0 ? 'Success' : failedSources < sources.length ? 'Partial' : 'Failed'
 
-    await sql\`
+    await sql`
       INSERT INTO watch_sync_history (
         name, date, status, sources_checked, sources_failed,
         listings_found, listings_saved, duplicates_skipped, duration_seconds
       ) VALUES (
-        \${\`Manual Search \${new Date().toISOString()}\`},
+        ${`Manual Search ${new Date().toISOString()}`},
         NOW(),
-        \${status},
-        \${currentSearchStatus.progress.sourcesChecked},
-        \${failedSources},
-        \${totalListingsFound},
-        \${totalSaved},
-        \${totalListingsFound - totalSaved},
-        \${duration}
+        ${status},
+        ${currentSearchStatus.progress.sourcesChecked},
+        ${failedSources},
+        ${totalListingsFound},
+        ${totalSaved},
+        ${totalListingsFound - totalSaved},
+        ${duration}
       )
-    \`
+    `
 
     currentSearchStatus.progress.listingsFound = totalListingsFound
 
