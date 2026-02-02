@@ -6,16 +6,21 @@ import { db } from '@/lib/db'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ExternalLink, Filter, X } from 'lucide-react'
+import { ExternalLink, Filter, X, ArrowUpDown } from 'lucide-react'
 import { formatDate, formatPrice } from '@/lib/utils'
 
 type Listing = any
 type Source = any
 
+type SortField = 'price' | 'date_found' | 'source' | 'manufacturer' | 'model'
+type SortDirection = 'asc' | 'desc'
+
 export default function ListingsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('')
   const [availabilityFilter, setAvailabilityFilter] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortField, setSortField] = useState<SortField>('date_found')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const { data: listings, isLoading } = useQuery<Listing[]>({
     queryKey: ['listings', availabilityFilter, sourceFilter],
@@ -31,20 +36,63 @@ export default function ListingsPage() {
     queryFn: () => db.getSources(),
   })
 
-  const filteredListings = listings?.filter((listing) => {
-    if (!searchQuery) return true
-    const search = searchQuery.toLowerCase()
-    return (
-      listing.manufacturer?.toLowerCase().includes(search) ||
-      listing.model?.toLowerCase().includes(search) ||
-      listing.reference_number?.toLowerCase().includes(search)
-    )
-  })
+  const filteredListings = listings
+    ?.filter((listing) => {
+      if (!searchQuery) return true
+      const search = searchQuery.toLowerCase()
+      return (
+        listing.manufacturer?.toLowerCase().includes(search) ||
+        listing.model?.toLowerCase().includes(search) ||
+        listing.reference_number?.toLowerCase().includes(search)
+      )
+    })
+    .sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortField) {
+        case 'price':
+          aValue = a.price || 0
+          bValue = b.price || 0
+          break
+        case 'date_found':
+          aValue = new Date(a.date_found || 0).getTime()
+          bValue = new Date(b.date_found || 0).getTime()
+          break
+        case 'source':
+          aValue = a.source || ''
+          bValue = b.source || ''
+          break
+        case 'manufacturer':
+          aValue = a.manufacturer || ''
+          bValue = b.manufacturer || ''
+          break
+        case 'model':
+          aValue = a.model || ''
+          bValue = b.model || ''
+          break
+        default:
+          return 0
+      }
+
+      // Compare values
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase()
+        bValue = bValue.toLowerCase()
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue)
+      } else {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue
+      }
+    })
 
   const clearFilters = () => {
     setSourceFilter('')
     setAvailabilityFilter('')
     setSearchQuery('')
+    setSortField('date_found')
+    setSortDirection('desc')
   }
 
   const hasFilters = sourceFilter || availabilityFilter || searchQuery
@@ -71,7 +119,7 @@ export default function ListingsPage() {
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">Filter</span>
+          <span className="font-medium">Filter & Sortierung</span>
           {hasFilters && (
             <Button
               variant="ghost"
@@ -85,7 +133,7 @@ export default function ListingsPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div>
             <Input
@@ -123,6 +171,43 @@ export default function ListingsPage() {
               <option value="Sold">Verkauft</option>
               <option value="Unknown">Unbekannt</option>
             </select>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div>
+            <div className="flex gap-2">
+              <select
+                className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={`${sortField}-${sortDirection}`}
+                onChange={(e) => {
+                  const [field, direction] = e.target.value.split('-') as [
+                    SortField,
+                    SortDirection
+                  ]
+                  setSortField(field)
+                  setSortDirection(direction)
+                }}
+              >
+                <optgroup label="Nach Preis">
+                  <option value="price-asc">Preis aufsteigend</option>
+                  <option value="price-desc">Preis absteigend</option>
+                </optgroup>
+                <optgroup label="Nach Datum">
+                  <option value="date_found-desc">Neueste zuerst</option>
+                  <option value="date_found-asc">Älteste zuerst</option>
+                </optgroup>
+                <optgroup label="Nach Name">
+                  <option value="manufacturer-asc">Hersteller A-Z</option>
+                  <option value="manufacturer-desc">Hersteller Z-A</option>
+                  <option value="model-asc">Modell A-Z</option>
+                  <option value="model-desc">Modell Z-A</option>
+                </optgroup>
+                <optgroup label="Nach Quelle">
+                  <option value="source-asc">Quelle A-Z</option>
+                  <option value="source-desc">Quelle Z-A</option>
+                </optgroup>
+              </select>
+            </div>
           </div>
         </div>
       </Card>
